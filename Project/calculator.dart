@@ -1,3 +1,9 @@
+/*
+This is my first project using dart. It is a console application. Here I am trying to used different function. Like sum for summation, sub for subtraction,
+mult for multiplication, div for division, mod for modulas, pow for square and calculator function for the main task.
+*/
+
+
 import 'dart:io';
 
 dynamic sum(var a, var b){
