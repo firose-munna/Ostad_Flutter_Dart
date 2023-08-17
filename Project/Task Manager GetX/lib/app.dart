@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:taskmanager/ui/screens/SplashScreen.dart';
 import 'package:get/get.dart';
+import 'package:taskmanager/ui/stateManager/delete_task_controller.dart';
+import 'package:taskmanager/ui/stateManager/get_task_controller.dart';
 import 'package:taskmanager/ui/stateManager/login_controller.dart';
+import 'package:taskmanager/ui/stateManager/summary_count_controller.dart';
 
 
 
@@ -61,6 +64,10 @@ class ControllerBinding extends Bindings {
   @override
   void dependencies() {
     Get.put<LoginController>(LoginController());
+    Get.put<SummaryCountController>(SummaryCountController());
+    Get.put<GetTasksController>(GetTasksController());
+    Get.put<DeleteTaskController>(DeleteTaskController());
+
 
   }
 }

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:taskmanager/data/model/networ_response.dart';
-import 'package:taskmanager/data/model/summaryCountModel.dart';
+import 'package:get/get.dart';
 import 'package:taskmanager/data/model/taskListModel.dart';
-import 'package:taskmanager/data/services/networkCaller.dart';
 import 'package:taskmanager/data/utils/urls.dart';
+import 'package:taskmanager/ui/screens/bottomNavBaseScreen.dart';
 import 'package:taskmanager/ui/screens/updateTaskStatusBottomSheet.dart';
+import 'package:taskmanager/ui/stateManager/delete_task_controller.dart';
+import 'package:taskmanager/ui/stateManager/get_task_controller.dart';
+import 'package:taskmanager/ui/stateManager/summary_count_controller.dart';
 import 'package:taskmanager/ui/widgets/iteam_card.dart';
 import 'package:taskmanager/ui/widgets/screenBackground.dart';
 import 'package:taskmanager/ui/widgets/summary_card.dart';
@@ -19,75 +21,27 @@ class InProgressTaskScreen extends StatefulWidget {
 }
 
 class _InProgressTaskScreenState extends State<InProgressTaskScreen> {
-  bool _getProgressTasksInProgress = false;
-  TaskListModel _taskListModel = TaskListModel();
-  bool _getCountSummaryInProgress = false;
-  SummaryCountModel _summaryCountModel = SummaryCountModel();
+  final SummaryCountController _summaryCountController = Get.find<SummaryCountController>();
+  final GetTasksController _getTasksController = Get.find<GetTasksController>();
+  final DeleteTaskController _deleteTaskController = Get.find<DeleteTaskController>();
 
-  Future<void> getCountSummary() async {
-    _getCountSummaryInProgress = true;
-    if (mounted) {
-      setState(() {});
-    }
-    final NetworkResponse response =
-        await NetworkCaller().getRequest(Urls.taskStatusCount);
-    if (response.isSuccess) {
-      _summaryCountModel = SummaryCountModel.fromJson(response.body!);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('get new task data failed')));
-      }
-    }
-    _getCountSummaryInProgress = false;
-    if (mounted) {
-      setState(() {});
-    }
-  }
-
-  Future<void> getInProgressTasks() async {
-    _getProgressTasksInProgress = true;
-    if (mounted) {
-      setState(() {});
-    }
-    final NetworkResponse response =
-        await NetworkCaller().getRequest(Urls.inProgressTasks);
-    if (response.isSuccess) {
-      _taskListModel = TaskListModel.fromJson(response.body!);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('In progress tasks get failed')));
-      }
-    }
-    _getProgressTasksInProgress = false;
-    if (mounted) {
-      setState(() {});
-    }
-  }
-
-  Future<void> deleteTask(String taskId) async {
-    final NetworkResponse response =
-        await NetworkCaller().getRequest(Urls.deleteTask(taskId));
-    if (response.isSuccess) {
-      _taskListModel.data!.removeWhere((element) => element.sId == taskId);
-      if (mounted) {
-        setState(() {});
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Deletion of task has been failed')));
-      }
-    }
-  }
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      getCountSummary();
-      getInProgressTasks();
+      _summaryCountController.getCountSummary().then((result) {
+        if (result == false) {
+          Get.snackbar('Failed', "Summary data get failed");
+        }
+      },
+      );
+      _getTasksController.getTasks(Urls.inProgressTasks).then((result) {
+        if (result == false) {
+          Get.snackbar('Failed', "In Progress Tasks get failed");
+        }
+      },
+      );
     });
   }
 
@@ -99,59 +53,84 @@ class _InProgressTaskScreenState extends State<InProgressTaskScreen> {
           child: Column(
             children: [
               const UserProfileBanner(),
-              _getCountSummaryInProgress
-                  ? const LinearProgressIndicator()
-                  : Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: SizedBox(
-                        height: 70,
-                        width: double.infinity,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _summaryCountModel.data?.length ?? 0,
-                          itemBuilder: (context, index) {
-                            return SummeryCard(
-                              title:
-                                  _summaryCountModel.data![index].sId ?? 'New',
-                              number: _summaryCountModel.data![index].sum ?? 0,
-                            );
-                          },
-                          separatorBuilder: (BuildContext context, int index) {
-                            return const Divider(
-                              height: 4,
-                            );
-                          },
-                        ),
-                      ),
-                    ),
+              GetBuilder<SummaryCountController>(
+                builder: (_) {
+                  if (_summaryCountController.getCountSummaryInProgress) {
+                    return const Center(
+                      child: LinearProgressIndicator(),
+                    );
+                  }
+                  return Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: SizedBox(
+                            height: 70,
+                            width: double.infinity,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: _summaryCountController.summaryCountModel.data?.length ?? 0,
+                              itemBuilder: (context, index) {
+                                return SummeryCard(
+                                  title: _summaryCountController.summaryCountModel.data![index].sId ?? 'New',
+                                  number: _summaryCountController.summaryCountModel.data![index].sum ?? 0,
+                                );
+                              },
+                              separatorBuilder: (BuildContext context, int index) {
+                                return const Divider(
+                                  height: 4,
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                }
+              ),
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: () async {
-                    getInProgressTasks();
-                    getCountSummary();
+                    _summaryCountController.getCountSummary().then((result) {
+                      if (result == false) {
+                        Get.snackbar('Failed', "Summary data get failed");
+                      }
+                    },
+                    );
+                    _getTasksController.getTasks(Urls.inProgressTasks).then((result) {
+                      if (result == false) {
+                        Get.snackbar('Failed', "In Progress Tasks get failed");
+                      }
+                    },
+                    );
                   },
-                  child: _getProgressTasksInProgress
-                      ? const Center(
-                          child: CircularProgressIndicator(),
-                        )
-                      : ListView.builder(
-                          itemCount: _taskListModel.data?.length ?? 0,
-                          itemBuilder: (context, index) {
-                            return ItemCard(
-                              child: TaskListTile(
-                                data: _taskListModel.data![index],
-                                onDeleteTab: () {
-                                  deleteTask(_taskListModel.data![index].sId!);
+                  child: GetBuilder<GetTasksController>(
 
-                                },
-                                onEditTab: () {
-                                  showStatusUpdateBottomSheet(
-                                      _taskListModel.data![index]);
-                                },
-                              ),
+                    builder: (_) {
+                      return _getTasksController.getTaskInProgress
+                          ? const Center(
+                              child: CircularProgressIndicator(),
+                            )
+                          : ListView.builder(
+                              itemCount: _getTasksController.taskListModel.data?.length ?? 0,
+                              itemBuilder: (context, index) {
+                                return ItemCard(
+                                  child: TaskListTile(
+                                    data: _getTasksController.taskListModel.data![index],
+                                    onDeleteTab: () {
+                                      _deleteTaskController.deleteTask(_getTasksController.taskListModel.data![index].sId!).then((result) {
+                                        if (result == false) {
+                                          Get.snackbar('Failed', "Task Deletion failed");
+                                        }},
+                                      );
+
+                                    },
+                                    onEditTab: () {
+                                      showStatusUpdateBottomSheet(
+                                          _getTasksController.taskListModel.data![index]);
+                                    },
+                                  ),
+                                );
+                              },
                             );
-                          },
-                        ),
+                    }
+                  ),
                 ),
               ),
             ],
@@ -169,7 +148,12 @@ class _InProgressTaskScreenState extends State<InProgressTaskScreen> {
         return UpdateTaskStatusSheet(
             task: task,
             onUpdate: () {
-              getInProgressTasks();
+              _getTasksController.getTasks(Urls.inProgressTasks).then((result) {
+                if (result == false) {
+                  Get.snackbar('Failed', "In Progress Tasks get failed");
+                }
+              },
+              );
             });
       },
     );
