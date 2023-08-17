@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:taskmanager/data/model/networ_response.dart';
-import 'package:taskmanager/data/services/networkCaller.dart';
-import 'package:taskmanager/data/utils/urls.dart';
+import 'package:get/get.dart';
 import 'package:taskmanager/ui/screens/auth/login_screen.dart';
+import 'package:taskmanager/ui/stateManager/signup_controller.dart';
 import 'package:taskmanager/ui/widgets/screenBackground.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -19,45 +18,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _mobileController = TextEditingController();
   final GlobalKey<FormState> _formkey = GlobalKey<FormState>();
-  bool _signupInProgress = false;
-
-  void userSignup() async {
-    _signupInProgress = true;
-    if (mounted) {
-      setState(() {});
-    }
-    final NetworkResponse response =
-        await NetworkCaller().postRequest(Urls.registration, <String, dynamic>{
-      "email": _emailController.text.trim(),
-      "firstName": _firstNameController.text.trim(),
-      "lastName": _lastNameController.text.trim(),
-      "mobile": _mobileController.text.trim(),
-      "password": _passwordController.text,
-      "photo": ""
-    });
-    _signupInProgress = false;
-    if (mounted) {
-      setState(() {});
-    }
-
-    if (response.isSuccess) {
-      _emailController.clear();
-      _passwordController.clear();
-      _firstNameController.clear();
-      _lastNameController.clear();
-      _mobileController.clear();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Registration Success!")));
-        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>const LoginScreen()), (route) => false);
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Registration Failed!")));
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -164,24 +124,47 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const SizedBox(
                     height: 12,
                   ),
-                  SizedBox(
-                    width: double.infinity,
-                    child: Visibility(
-                      visible: _signupInProgress == false,
-                      replacement:
-                          const Center(child: CircularProgressIndicator()),
-                      child: ElevatedButton(
-                          onPressed: () {
-                            if (!_formkey.currentState!.validate()) {
-                              return;
-                            }
-                            userSignup();
-                          },
-                          child: const Text(
-                            "Sign Up",
-                            style: TextStyle(fontSize: 16),
-                          )),
-                    ),
+                  GetBuilder<SignupController>(
+                    builder: (signupController) {
+                      return SizedBox(
+                        width: double.infinity,
+                        child: Visibility(
+                          visible: signupController.signUpInProgress == false,
+                          replacement:
+                              const Center(child: CircularProgressIndicator()),
+                          child: ElevatedButton(
+                              onPressed: () {
+                                if (!_formkey.currentState!.validate()) {
+                                  return;
+                                }
+                                signupController.userSignup(
+                                    _emailController.text.trim(),
+                                    _firstNameController.text.trim(),
+                                    _lastNameController.text.trim(),
+                                    _mobileController.text.trim(),
+                                    _passwordController.text).then((result) {
+                                  if (result == true) {
+                                    _emailController.clear();
+                                    _passwordController.clear();
+                                    _firstNameController.clear();
+                                    _lastNameController.clear();
+                                    _mobileController.clear();
+                                    Get.snackbar('Wow', "Registration Success!");
+                                    Get.offAll(()=>const LoginScreen());
+                                  }
+                                  else{
+                                    Get.snackbar('Failed', "Registration Failed!");
+                                  }
+                                },
+                                );
+                              },
+                              child: const Text(
+                                "Sign Up",
+                                style: TextStyle(fontSize: 16),
+                              )),
+                        ),
+                      );
+                    }
                   ),
                   const SizedBox(
                     height: 25,
@@ -195,7 +178,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       TextButton(
                           onPressed: () {
-                            Navigator.pop(context);
+                            Get.back();
                           },
                           child: const Text("Sign In"))
                     ],

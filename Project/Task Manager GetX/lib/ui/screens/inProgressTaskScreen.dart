@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:taskmanager/data/model/taskListModel.dart';
 import 'package:taskmanager/data/utils/urls.dart';
-import 'package:taskmanager/ui/screens/bottomNavBaseScreen.dart';
 import 'package:taskmanager/ui/screens/updateTaskStatusBottomSheet.dart';
 import 'package:taskmanager/ui/stateManager/delete_task_controller.dart';
 import 'package:taskmanager/ui/stateManager/get_task_controller.dart';

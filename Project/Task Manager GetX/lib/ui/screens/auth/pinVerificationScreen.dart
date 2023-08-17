@@ -19,26 +19,30 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
 
   final TextEditingController _otpController = TextEditingController();
   bool _otpVerificationInProgress = false;
+  final GlobalKey<FormState> _formkey = GlobalKey<FormState>();
 
-  Future<void> verifyOTP() async {
+  Future<void> verifyOTP(String email, String otp) async {
     _otpVerificationInProgress = true;
     if (mounted) {
       setState(() {});
     }
     final NetworkResponse response = await NetworkCaller()
-        .getRequest(Urls.otpVerify(widget.email, _otpController.text));
+        .getRequest(Urls.otpVerify(email, otp));
     _otpVerificationInProgress = false;
     if (mounted) {
       setState(() {});
     }
-    if (response.isSuccess) {
+    if (response.body!['status'] == 'success') {
+      _formkey.currentState!.reset();
       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Otp verification Successful')));
         Navigator.push(
             context,
             MaterialPageRoute(
                 builder: (context) => SetPasswordScreen(
-                  email: widget.email,
-                  otp: _otpController.text,
+                  email: email,
+                  otp: otp,
                 )));
       }
     } else {
@@ -47,6 +51,26 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
             const SnackBar(content: Text('Otp verification has been failed!')));
       }
     }
+  }
+
+
+  ElevatedButton buildSubmitButton() {
+    return ElevatedButton(
+      onPressed: _otpVerificationInProgress == true
+          ? null
+          : () async {
+        if (_formkey.currentState!.validate() == false) {
+          return;
+        } else {
+          await verifyOTP(widget.email, _otpController.text.trim());
+        }
+      },
+      child: Visibility(
+        visible: _otpVerificationInProgress == false,
+        replacement: const CircularProgressIndicator(),
+        child: const Text('Verify', style: TextStyle(fontSize: 16),),
+      ),
+    );
   }
 
   @override
@@ -81,61 +105,61 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
                   const SizedBox(
                     height: 18,
                   ),
-                  PinCodeTextField(
-                    controller: _otpController,
-                    length: 6,
-                    keyboardType: TextInputType.number,
-                    obscureText: false,
-                    animationType: AnimationType.fade,
-                    pinTheme: PinTheme(
-                      shape: PinCodeFieldShape.box,
-                      borderRadius: BorderRadius.circular(5),
-                      fieldHeight: 50,
-                      fieldWidth: 40,
-                      activeFillColor: Colors.teal,
-                      inactiveFillColor: Colors.white,
-                      inactiveColor: Colors.white,
-                      activeColor: Colors.white,
-                      selectedFillColor: Colors.white,
-                      selectedColor: Colors.teal
+                  Form(
+                    key: _formkey,
+                    child: PinCodeTextField(
+                      controller: _otpController,
+                      length: 6,
+                      keyboardType: TextInputType.number,
+                      obscureText: false,
+                      animationType: AnimationType.fade,
+                      pinTheme: PinTheme(
+                        shape: PinCodeFieldShape.box,
+                        borderRadius: BorderRadius.circular(5),
+                        fieldHeight: 50,
+                        fieldWidth: 40,
+                        activeFillColor: Colors.teal,
+                        inactiveFillColor: Colors.white,
+                        inactiveColor: Colors.white,
+                        activeColor: Colors.white,
+                        selectedFillColor: Colors.white,
+                        selectedColor: Colors.teal
+                      ),
+                      animationDuration: const Duration(milliseconds: 300),
+                      backgroundColor: Colors.transparent,
+                      cursorColor: Colors.teal,
+
+                      enableActiveFill: true,
+                      enablePinAutofill: true,
+
+                      onCompleted: (v) {
+                      },
+                      onChanged: (value) {
+                      },
+                      beforeTextPaste: (text) {
+                        print("Allowing to paste $text");
+                        //if you return true then it will show the paste confirmation dialog. Otherwise if false, then nothing will happen.
+                        //but you can show anything you want here, like your pop up saying wrong paste format or etc
+                        return true;
+                      },
+                      appContext: context,
+                      validator: (String? value){
+                        if(value?.isEmpty?? true){
+                          return "*Enter your email";
+                        }
+                        return null;
+                      },
                     ),
-                    animationDuration: const Duration(milliseconds: 300),
-                    backgroundColor: Colors.transparent,
-                    cursorColor: Colors.teal,
-
-                    enableActiveFill: true,
-                    enablePinAutofill: true,
-
-                    onCompleted: (v) {
-                    },
-                    onChanged: (value) {
-                    },
-                    beforeTextPaste: (text) {
-                      print("Allowing to paste $text");
-                      //if you return true then it will show the paste confirmation dialog. Otherwise if false, then nothing will happen.
-                      //but you can show anything you want here, like your pop up saying wrong paste format or etc
-                      return true;
-                    },
-                    appContext: context,
                   ),
                   const SizedBox(
                     height: 12,
                   ),
 
+
+
                   SizedBox(
                     width: double.infinity,
-                    child: Visibility(
-                      visible: _otpVerificationInProgress == false,
-                      replacement: const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          verifyOTP();
-                        },
-                        child: const Text("Verify", style: TextStyle(fontSize: 16),)
-                      ),
-                    ),
+                    child: buildSubmitButton(),
                   ),
 
                   Row(
