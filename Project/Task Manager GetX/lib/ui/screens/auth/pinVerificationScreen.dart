@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
-import 'package:taskmanager/data/model/networ_response.dart';
-import 'package:taskmanager/data/services/networkCaller.dart';
-import 'package:taskmanager/data/utils/urls.dart';
 import 'package:taskmanager/ui/screens/auth/login_screen.dart';
 import 'package:taskmanager/ui/screens/auth/setPasswordScreen.dart';
+import 'package:taskmanager/ui/stateManager/pin_verification_controller.dart';
 import 'package:taskmanager/ui/widgets/screenBackground.dart';
 
 class PinVerificationScreen extends StatefulWidget {
   final String email;
   const PinVerificationScreen({super.key, required this.email});
-
   @override
   State<PinVerificationScreen> createState() => _PinVerificationScreenState();
 }
@@ -18,55 +16,30 @@ class PinVerificationScreen extends StatefulWidget {
 class _PinVerificationScreenState extends State<PinVerificationScreen> {
 
   final TextEditingController _otpController = TextEditingController();
-  bool _otpVerificationInProgress = false;
   final GlobalKey<FormState> _formkey = GlobalKey<FormState>();
-
-  Future<void> verifyOTP(String email, String otp) async {
-    _otpVerificationInProgress = true;
-    if (mounted) {
-      setState(() {});
-    }
-    final NetworkResponse response = await NetworkCaller()
-        .getRequest(Urls.otpVerify(email, otp));
-    _otpVerificationInProgress = false;
-    if (mounted) {
-      setState(() {});
-    }
-    if (response.body!['status'] == 'success') {
-      _formkey.currentState!.reset();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Otp verification Successful')));
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => SetPasswordScreen(
-                  email: email,
-                  otp: otp,
-                )));
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Otp verification has been failed!')));
-      }
-    }
-  }
-
+  final PinVerificationController _pinVerificationController = Get.find<PinVerificationController>();
 
   ElevatedButton buildSubmitButton() {
     return ElevatedButton(
-      onPressed: _otpVerificationInProgress == true
-          ? null
-          : () async {
+      onPressed:  _pinVerificationController.otpVerificationInProgress== true ? null : () async {
         if (_formkey.currentState!.validate() == false) {
           return;
         } else {
-          await verifyOTP(widget.email, _otpController.text.trim());
+          await _pinVerificationController.verifyOTP(widget.email, _otpController.text.trim()).then((result) {
+              if (result == true) {
+                _formkey.currentState!.reset();
+                Get.snackbar('Wow!', "Otp verification Successful");
+                Get.to(()=> SetPasswordScreen(email: widget.email, otp: _otpController.text.trim()));
+              }
+              else{
+                Get.snackbar('Failed', "Otp verification has been Failed!");
+              }
+            },
+          );
         }
       },
       child: Visibility(
-        visible: _otpVerificationInProgress == false,
+        visible: _pinVerificationController.otpVerificationInProgress == false,
         replacement: const CircularProgressIndicator(),
         child: const Text('Verify', style: TextStyle(fontSize: 16),),
       ),
@@ -138,8 +111,6 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
                       },
                       beforeTextPaste: (text) {
                         print("Allowing to paste $text");
-                        //if you return true then it will show the paste confirmation dialog. Otherwise if false, then nothing will happen.
-                        //but you can show anything you want here, like your pop up saying wrong paste format or etc
                         return true;
                       },
                       appContext: context,
@@ -157,9 +128,13 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
 
 
 
-                  SizedBox(
-                    width: double.infinity,
-                    child: buildSubmitButton(),
+                  GetBuilder<PinVerificationController>(
+                    builder: (_) {
+                      return SizedBox(
+                        width: double.infinity,
+                        child: buildSubmitButton(),
+                      );
+                    }
                   ),
 
                   Row(
@@ -170,7 +145,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                       TextButton(onPressed: () {
-                        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const LoginScreen()), (route) => false);
+                        Get.offAll(()=> const LoginScreen());
                       }, child: const Text("Sign In"))
                     ],
                   )

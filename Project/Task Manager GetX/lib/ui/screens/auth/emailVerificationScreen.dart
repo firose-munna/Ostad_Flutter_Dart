@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:taskmanager/data/model/networ_response.dart';
-import 'package:taskmanager/data/services/networkCaller.dart';
-import 'package:taskmanager/data/utils/urls.dart';
+import 'package:get/get.dart';
 import 'package:taskmanager/ui/screens/auth/pinVerificationScreen.dart';
+import 'package:taskmanager/ui/stateManager/email_verification_controller.dart';
 import 'package:taskmanager/ui/widgets/screenBackground.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
@@ -14,40 +13,8 @@ class EmailVerificationScreen extends StatefulWidget {
 
 class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   final TextEditingController _emailController = TextEditingController();
-
   final GlobalKey<FormState> _formkey = GlobalKey<FormState>();
-
-  bool _emailSendInProgress = false;
-
-
-  Future<void> sendOTPToEmail() async {
-    _emailSendInProgress = true;
-    if (mounted) {
-      setState(() {});
-    }
-    final NetworkResponse response = await NetworkCaller()
-        .getRequest(Urls.sendOtpToEmail(_emailController.text.trim()));
-    _emailSendInProgress = false;
-    if (mounted) {
-      setState(() {});
-    }
-    if (response.isSuccess) {
-      if (mounted) {
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => PinVerificationScreen(
-                  email: _emailController.text.trim(),
-                )));
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Email verification has been failed!')));
-      }
-    }
-  }
-
+  final EmailVerificationController _emailVerificationController = Get.find<EmailVerificationController>();
 
   @override
   Widget build(BuildContext context) {
@@ -101,23 +68,33 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                     ),
 
 
-                    SizedBox(
-                      width: double.infinity,
-                      child: Visibility(
-                        visible: _emailSendInProgress == false,
-                        replacement: const Center(child:  CircularProgressIndicator()),
-                        child: ElevatedButton(
-                            onPressed: () {
-                              if(!_formkey.currentState!.validate()){
-                                return;
-                              }
-                              //userSignup();
-                              sendOTPToEmail();
-
-                              //Navigator.push(context, MaterialPageRoute(builder: (context)=>PinVerificationScreen()));
-                            },
-                            child: const Text("Send", style: TextStyle(fontSize: 16),)),
-                      ),
+                    GetBuilder<EmailVerificationController>(
+                      builder: (_) {
+                        return SizedBox(
+                          width: double.infinity,
+                          child: Visibility(
+                            visible: _emailVerificationController.emailSendInProgress == false,
+                            replacement: const Center(child:  CircularProgressIndicator()),
+                            child: ElevatedButton(
+                                onPressed: () {
+                                  if(!_formkey.currentState!.validate()){
+                                    return;
+                                  }
+                                  _emailVerificationController.sendOTPToEmail(_emailController.text.trim()).then((result) {
+                                    if (result == true) {
+                                      Get.snackbar('Wow!', "Email verification Successful");
+                                      Get.to(()=> PinVerificationScreen(email: _emailController.text.trim()));
+                                    }
+                                    else{
+                                      Get.snackbar('Failed', "Email verification has been failed!");
+                                    }
+                                  },
+                                  );
+                                },
+                                child: const Text("Send", style: TextStyle(fontSize: 16),)),
+                          ),
+                        );
+                      }
                     ),
 
                     Row(
@@ -128,7 +105,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                           style: TextStyle(fontWeight: FontWeight.w600),
                         ),
                         TextButton(onPressed: () {
-                          Navigator.pop(context);
+                          Get.back();
                         }, child: const Text("Sign In"))
                       ],
                     )

@@ -1,13 +1,11 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:taskmanager/data/model/authUtilty.dart';
 import 'package:taskmanager/data/model/login_model.dart';
-import 'package:taskmanager/data/model/networ_response.dart';
-import 'package:taskmanager/data/services/networkCaller.dart';
-import 'package:taskmanager/data/utils/urls.dart';
 import 'package:taskmanager/ui/screens/auth/login_screen.dart';
+import 'package:taskmanager/ui/stateManager/profile_update_controller.dart';
 import 'package:taskmanager/ui/widgets/screenBackground.dart';
-
 import 'package:taskmanager/ui/widgets/userProfileBanner.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -21,11 +19,12 @@ class UpdateProfileScreen extends StatefulWidget {
 class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   XFile? imageFile;
   ImagePicker picker = ImagePicker();
-  bool _profileInProgress = false;
+
   bool isUpdateInProgress = false;
   final TextEditingController _imageNameController = TextEditingController();
   Data userData = AuthUtility.userInfo.data!;
   late Uint8List imageBytes;
+  final ProfileUpdateController _profileUpdateController = Get.find<ProfileUpdateController>();
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _firstNameController = TextEditingController();
@@ -41,58 +40,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     _firstNameController.text = userData.firstName ?? '';
     _lastNameController.text = userData.lastName ?? '';
     _mobileController.text = userData.mobile ?? '';
-  }
-
-  Future<void> updateProfile() async {
-    _profileInProgress = true;
-    if (mounted) {
-      setState(() {});
-    }
-    final Map<String, dynamic> requestBody = {
-      "firstName": _firstNameController.text.trim(),
-      "lastName": _lastNameController.text.trim(),
-      "mobile": _mobileController.text.trim(),
-      "photo": ""
-    };
-    if (_passwordController.text.isNotEmpty) {
-      requestBody['password'] = _passwordController.text;
-    }
-
-    final NetworkResponse response =
-        await NetworkCaller().postRequest(Urls.updateProfile, requestBody);
-    _profileInProgress = false;
-    if (mounted) {
-      setState(() {});
-    }
-    if (response.isSuccess) {
-      userData.firstName = _firstNameController.text.trim();
-      userData.lastName = _lastNameController.text.trim();
-      userData.mobile = _mobileController.text.trim();
-      AuthUtility.updateUserInfo(userData);
-      _passwordController.clear();
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Profile updated! Login Again..')));
-
-        await AuthUtility.clearUserInfo();
-        Future.delayed(Duration.zero).then((value) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-              builder: (context) {
-                return const LoginScreen();
-              },
-            ),
-                (route) => false,
-          );
-        });
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profile update failed! Try again.')));
-      }
-    }
   }
 
   @override
@@ -239,20 +186,44 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                           const SizedBox(
                             height: 12,
                           ),
-                          SizedBox(
-                            width: double.infinity,
-                            child: _profileInProgress
-                                ? const Center(
-                                    child: CircularProgressIndicator(),
-                                  )
-                                : ElevatedButton(
-                                    onPressed: () {
-                                      updateProfile();
-                                    },
-                                    child: const Text(
-                                      "Update Profile",
-                                      style: TextStyle(fontSize: 16),
-                                    )),
+                          GetBuilder<ProfileUpdateController>(
+                            builder: (_) {
+                              return SizedBox(
+                                width: double.infinity,
+                                child: _profileUpdateController.profileUpdateInProgress
+                                    ? const Center(
+                                        child: CircularProgressIndicator(),
+                                      )
+                                    : ElevatedButton(
+                                        onPressed: () {
+                                          _profileUpdateController.updateProfile( _firstNameController.text.trim(), _lastNameController.text.trim(),_mobileController.text.trim(),_passwordController.text).then((result) {
+                                            if (result == true) {
+                                              userData.firstName = _firstNameController.text.trim();
+                                              userData.lastName = _lastNameController.text.trim();
+                                              userData.mobile = _mobileController.text.trim();
+                                              AuthUtility.updateUserInfo(userData);
+                                              _passwordController.clear();
+                                              Get.snackbar("Wow!", 'Profile updated! Login Again..');
+                                              if (mounted) {
+                                                AuthUtility.clearUserInfo();
+                                                Future.delayed(Duration.zero).then((value) {
+                                                  Get.offAll(()=> const LoginScreen());
+                                                  //Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) {return const LoginScreen();},), (route) => false,);
+                                                });
+                                              }
+                                            }
+                                            else{
+                                              Get.snackbar('Failed', "Profile update failed! Try again.");
+                                            }
+                                          },
+                                          );
+                                        },
+                                        child: const Text(
+                                          "Update Profile",
+                                          style: TextStyle(fontSize: 16),
+                                        )),
+                              );
+                            }
                           ),
                         ],
                       ),

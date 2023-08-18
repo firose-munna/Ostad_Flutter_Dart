@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:taskmanager/ui/screens/SplashScreen.dart';
 import 'package:get/get.dart';
+import 'package:taskmanager/ui/stateManager/add_new_task_controller.dart';
 import 'package:taskmanager/ui/stateManager/delete_task_controller.dart';
+import 'package:taskmanager/ui/stateManager/email_verification_controller.dart';
 import 'package:taskmanager/ui/stateManager/get_task_controller.dart';
 import 'package:taskmanager/ui/stateManager/login_controller.dart';
+import 'package:taskmanager/ui/stateManager/pin_verification_controller.dart';
+import 'package:taskmanager/ui/stateManager/profile_update_controller.dart';
+import 'package:taskmanager/ui/stateManager/reset_password_controller.dart';
 import 'package:taskmanager/ui/stateManager/signup_controller.dart';
 import 'package:taskmanager/ui/stateManager/summary_count_controller.dart';
+import 'package:taskmanager/ui/stateManager/update_task_status_bottom_sheet_controller.dart';
 
 
 
@@ -69,7 +75,11 @@ class ControllerBinding extends Bindings {
     Get.put<GetTasksController>(GetTasksController());
     Get.put<DeleteTaskController>(DeleteTaskController());
     Get.put<SignupController>(SignupController());
-
-
+    Get.put<PinVerificationController>(PinVerificationController());
+    Get.put<EmailVerificationController>(EmailVerificationController());
+    Get.put<ResetPasswordController>(ResetPasswordController());
+    Get.put<AddNewTaskController>(AddNewTaskController());
+    Get.put<ProfileUpdateController>(ProfileUpdateController());
+    Get.put<UpdateTaskStatusBottomSheetController>(UpdateTaskStatusBottomSheetController());
   }
 }

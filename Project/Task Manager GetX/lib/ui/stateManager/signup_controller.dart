@@ -5,7 +5,6 @@ import 'package:taskmanager/data/utils/urls.dart';
 
 class SignupController extends GetxController {
   bool _signUpInProgress = false;
-
   bool get signUpInProgress => _signUpInProgress;
 
   Future<bool> userSignup(String email, String firstName, String lastName, String mobile, String password) async {

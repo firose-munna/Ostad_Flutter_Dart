@@ -119,6 +119,9 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                                       if (result == false) {
                                         Get.snackbar('Failed', "Task Deletion failed");
                                       }
+                                      else{
+                                        Get.snackbar('Wow!', "Task Deletion Success");
+                                      }
                                     },
                                     );
                                     Get.offAll(() => const BottomNavBaseScreen());

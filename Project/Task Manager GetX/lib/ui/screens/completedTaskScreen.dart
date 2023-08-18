@@ -115,6 +115,8 @@ class _CompletedTaskScreenState extends State<CompletedTaskScreen> {
                                       _deleteTaskController.deleteTask(_getTasksController.taskListModel.data![index].sId!).then((result) {
                                         if (result == false) {
                                           Get.snackbar('Failed', "Task Deletion failed");
+                                        }else{
+                                          Get.snackbar('Wow!', "Task Deletion Success");
                                         }},
                                       );},
                                     onEditTab: () {showStatusUpdateBottomSheet(_getTasksController.taskListModel.data![index]);},
