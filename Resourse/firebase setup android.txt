@@ -1,0 +1,12 @@
+1. Open FireBase
+2. Create/Open Flutter Project
+3. Copy the project id from app/build.gradle
+4. Paste into Firebase project, Type project name and fingerprint (Boths are optional). Then Continue
+5. Open app/build.gradle and paste "apply plugin: 'com.google.gms.google-services'"
+6. In dependency funtion- paste "implementation(platform("com.google.firebase:firebase-bom:32.2.3"))" and "implementation("com.google.firebase:firebase-analytics-ktx")"
+7. Open android/build.gradle and paste "classpath "com.google.gms:google-services:4.3.15""
+8. Open pubspec.ymal file and set dependency "firebase_core: ^2.15.1"
+9. Open main.dart and paste "WidgetsFlutterBinding.ensureInitialized();" and "await Firebase.initializeApp();" into main function. 
+10. Open app/build.gradle and set minSdkVersion 19 and tergetSdkVersion 33
+11. Open android/build.gradle and set ext.kotlin_version = '1.8.0'
+12. Then Run the project
