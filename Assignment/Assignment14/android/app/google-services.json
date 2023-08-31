@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "77264926454",
+    "project_id": "fir-test-9f3c5",
+    "storage_bucket": "fir-test-9f3c5.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:77264926454:android:dde44567a0bd0a464e9ed7",
+        "android_client_info": {
+          "package_name": "com.firoseit.livetest7app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "77264926454-99vpvm6gf4r3i6cp8fst4p4uab8h051f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBD44jqiNgWWX8XdEYrsImcYaNSaUqxCwg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "77264926454-99vpvm6gf4r3i6cp8fst4p4uab8h051f.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
