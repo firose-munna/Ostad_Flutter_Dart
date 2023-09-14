@@ -1,5 +1,5 @@
 class Urls{
-  static const String _baseUrl = "https://task.teamrabbil.com/api/v1";
+  static const String _baseUrl = "API";
   static String registration = "$_baseUrl/registration";
   static String login = '$_baseUrl/login';
   static String createTask = '$_baseUrl/createTask';
